@@ -13,7 +13,7 @@ def experiment_definitions():
         bind_nested("model_spec", utils.sup4()),
         bind_nested("task", utils.tldr_task),
         bind("query_dataset_split", "valid"),
-        bind("mpi", 1),
+        bind("model_spec.device", "cpu"),
         bind("num_queries", 128),
         bind("sample.temperature", 0.01),
     )
@@ -22,7 +22,8 @@ def experiment_definitions():
         bind_nested("model_spec", utils.sup4_ppo_rm4()),
         bind_nested("task", utils.tldr_task),
         bind("query_dataset_split", "valid"),
-        bind("mpi", 1),
+        bind("model_spec.device", "cpu"),
+        bind("fp16_activations", False),
         bind("num_queries", 128),
         bind("sample.temperature", 0.01),
     )
@@ -32,7 +33,7 @@ def experiment_definitions():
         bind_nested("model_spec", utils.random_teeny_model_spec()),
         bind_nested("orig_model_spec", utils.random_teeny_model_spec()),
         bind("query_dataset_split", "train"),
-        bind("mpi", 1),
+        bind("model_spec.device", "cpu"),
         bind("num_queries", 8),
         bind("responses_per_query", 2),
         bind("responses_per_query_per_batch", 1),
@@ -48,6 +49,7 @@ def experiment_definitions():
 
 
 if __name__ == "__main__":
+    print("Running experiment definitions")
     fire.Fire(
         experiment_def_launcher(experiment_dict=experiment_definitions(), main_fn=sample.main)
     )

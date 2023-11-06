@@ -9,7 +9,7 @@ from typing import Callable, Optional, Set, List, Dict
 import blobfile as bf
 import numpy as np
 import torch
-from mpi4py import MPI
+# from mpi4py import MPI
 
 import summarize_from_feedback
 from summarize_from_feedback.model_layout import ModelLayout
@@ -41,8 +41,8 @@ class RunParams(hyperparams.HParams):
     def all_gpu_layout(self):
         return ModelLayout.standard(
             n_shards=self.n_shards,
-            total_gpus=MPI.COMM_WORLD.Get_size(),
-            my_rank=MPI.COMM_WORLD.Get_rank(),
+            total_gpus=1,
+            my_rank=0,
         )
 
 
@@ -128,6 +128,7 @@ class ModelWithHeads(torch.nn.Module):
         outputs = self.model(*args, **kwargs)
         x = outputs["acts"]
         for name, head in self.scalar_heads.items():
+            # breakpoint()
             outputs[name] = torch.squeeze(head(x.type(head.weight.dtype)), dim=-1)
         return outputs
 
@@ -481,16 +482,12 @@ class QueryResponseModel:
     def __init__(
         self, spec: ModelSpec, *, layout: ModelLayout, logit_head=True, heads=(), init_scales=1.0
     ):
-        device = setup_cuda_device_and_dist(
-            backend="nccl" if spec.device == "cuda" else "gloo",
-            master_addr=None,
-            device=spec.device,
-        )
+        device = torch.device("cpu")
         self.device = device
         self.layout = layout
         assert self.layout.n_shards == spec.run_params.n_shards
-        self.dp_comm = create_data_parallel_comm(layout)
-        self.in_replica_comm = create_within_replica_comm(layout)
+        # self.dp_comm = create_data_parallel_comm(layout)
+        # self.in_replica_comm = create_within_replica_comm(layout)
 
         self.logit_head = logit_head
         self.heads = heads
@@ -586,7 +583,7 @@ class QueryResponseModel:
 
         self._sync_params(params_to_init, heads_to_init=init_heads)
 
-        self.barrier("load_finished")
+        # self.barrier("load_finished")
 
     def barrier(self, name=""):
         """
@@ -632,6 +629,7 @@ class QueryResponseModel:
                 ret[k] = d
         if eval_fn is not None:
             ret["eval_stats"] = eval_fn(outputs_mb, eval_inputs)
+        # breakpoint()
         return ret
 
     def _sample(

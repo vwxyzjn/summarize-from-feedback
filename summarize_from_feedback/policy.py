@@ -78,6 +78,7 @@ class Policy(QueryResponseModel):
             eval_fn = _wrap_policy_fn(
                 eval_fn, list(self.heads) + (["logits"] if self.logit_head else [])
             )
+        # breakpoint()
         ret = self._eval(query_tokens, response_tokens[:, :, :-1], eval_fn=eval_fn, **kwargs)
         for key in self.heads:
             ret[key] = ret[key]["response"]

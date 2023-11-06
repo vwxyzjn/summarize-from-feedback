@@ -55,9 +55,13 @@ class RewardModel(QueryResponseModel):
         result = self._eval(
             query_tokens, response_tokens, eval_fn=eval_fn, eval_inputs=eval_inputs, **kwargs
         )
-        result["reward"] = gather_one(
-            result["reward"]["response"][:, :, 1:], last_response_indices, dim=2
-        )
+        # breakpoint()
+        result["reward"] = gather_one(result["reward"]["response"][:, :, 1:], last_response_indices, dim=2)
+        # from transformers import AutoTokenizer
+        # tok = AutoTokenizer.from_pretrained("gpt2")
+        # print(tok.decode(response_tokens[0,0]))
+
+       
 
         assert_shape_eq(result["reward"], (response_tokens.size(0), response_tokens.size(1)))
         return result

@@ -429,7 +429,7 @@ class Transformer(nn.Module):
             # Make sure the output is the same at each shard, since the layer norm params can drift
             if self.mp_comm is not None:
                 x = self.mp_comm.broadcast(x, src=self.mp_comm.ranks[0], name="final")
-
+        # breakpoint()
         outputs = dict(
             acts=x,
             hidden_state=PastKVHiddenState(
@@ -443,12 +443,15 @@ class Transformer(nn.Module):
             logits = F.linear(x.type(act_dtype), self.unembedding_weights.type(act_dtype))
 
             # Mask out padding logits
+            # breakpoint()
             logits[:, :, self.n_vocab :] = -torch.finfo(logits.dtype).max
 
             if self.mp_comm is not None:
                 logits = self.mp_comm.all_reduce(logits, "logits")
 
             outputs["logits"] = logits
+
+        # breakpoint()
 
         return outputs
 
@@ -540,7 +543,7 @@ def build_with_random_weights(
             f"will results in a ~20% slowdown"
         )
 
-    mp_comm = create_model_parallel_comm(layout)
+    # mp_comm = create_model_parallel_comm(layout)
 
     # Only pass these params to the Transformer constructor if they're in model_H. That way, the
     # defaults specified in the Transformer constructor apply.
@@ -563,7 +566,7 @@ def build_with_random_weights(
         d_model=model_H.d_model,
         n_layer=model_H.n_layer,
         heads=model_H.heads,
-        mp_comm=mp_comm,
+        mp_comm=None,
         m_attn=model_H.m_attn,
         m_mlp=model_H.m_mlp,
         verbose=verbose and is_logging_rank,

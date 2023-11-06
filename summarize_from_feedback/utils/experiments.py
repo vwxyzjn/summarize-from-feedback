@@ -60,7 +60,9 @@ def get_experiment_jobs(name, launch_fn, trials, hparam_class=None) -> List[jobs
         else:
             hparams = hparam_class()
             hparams.override_from_pairs(filtered_trial_bindings)
-            to_launch.append(jobs.Job(fn=partial(launch_fn, hparams), params=launch_H))
+            launch_fn(hparams)
+            # to_launch.append(jobs.Job(fn=partial(launch_fn, hparams), params=launch_H))
+            return
     return to_launch
 
 

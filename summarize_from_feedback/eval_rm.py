@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 import blobfile as bf
 import numpy as np
 import torch
+from rich.pretty import pprint
 
 from summarize_from_feedback.datasets import jsonl_encoding
 from summarize_from_feedback.query_response_model import ModelSpec
@@ -33,6 +34,9 @@ class HParams(hyperparams.HParams):
 
 def main(H: HParams):
     layout = H.reward_model_spec.run_params.all_gpu_layout()
+    H.reward_model_spec.device = "cpu"
+    H.fp16_activations = False
+    pprint(H)
 
     reward_model = RewardModel(task_hparams=H.task, spec=H.reward_model_spec, layout=layout)
 
@@ -43,6 +47,8 @@ def main(H: HParams):
     results_dir = bf.join(
         os.environ.get("OUTPUT_DIR", os.path.join("/tmp/jobs", os.getenv("JOB_NAME"))), "results"
     )
+    # torch.save(reward_model.model.state_dict(), "reward_model.pt")
+    print(results_dir)
     bf.makedirs(results_dir)
 
     if layout.is_logging_rank:
@@ -88,6 +94,7 @@ def main(H: HParams):
                     replica_rewards.append(rewards)
 
                     output = {**input, H.output_key: rewards}
+                    print(rewards)
                     out_f.write((json.dumps(jsonl_encoding.encode_example(output)) + "\n"))
             input_idx += 1
             if layout.is_replica_root:

@@ -46,6 +46,7 @@ def avg_negative(x):
 
 def main(H: HParams):
     layout = H.model_spec.run_params.all_gpu_layout()
+    print(layout)
 
     # Instantiate policy
     policy = Policy(task_hparams=H.task, spec=H.model_spec, layout=layout)
@@ -102,6 +103,8 @@ def main(H: HParams):
             logprobs = label_logprobs(logits=outputs_mb["logits"], labels=eval_inputs_mb["labels"])
             logprobs = torch.masked_fill(logprobs, eval_inputs_mb["mask"], INVALID_LOGPROB)
             return dict(logprobs=logprobs)
+        
+        # breakpoint()
 
         mask = tokens == PADDING_TOKEN
         return eval_fn, dict(labels=torch.masked_fill(tokens, mask, 0), mask=mask)
@@ -111,6 +114,7 @@ def main(H: HParams):
         for run_idx in range(num_runs):
             with Timer() as timer:
                 input = next(input_iter)
+                # breakpoint()
                 context_tokens = input["context"]["tokens"]
                 assert_shape_eq(
                     context_tokens,
@@ -282,6 +286,7 @@ def main(H: HParams):
                         print(f"RESULT {replica_sample_idx} of {total_queries_per_replica}")
                         print(f"CONTEXT:")
                         print(context)
+                        print(repr(context))
                         print(f"REF:")
                         print(d["ref"])
                         print("avg logprob", avg_negative(d["ref_logprobs"]))
